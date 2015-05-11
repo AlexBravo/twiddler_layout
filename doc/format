@@ -1,0 +1,103 @@
+Header      Settings and table location information (16 bytes)          Default config example data (hex)
+# of bytes                                                              Loc     Value   Note
+1           config format version                                       0000    04      Version 4
+2           chord-map offset from start of file, LSB first then MSB     0001    10 00   Address 0010
+2           mouse-chord-map offset, LSB first then MSB                  0003    F8 01   Address 01F8
+2           string table offset, LSB first then MSB                     0005    1F 02   Address 021F
+2           mouse mode time - timeout for staying in mouse mode         0007    DC 05
+2           mouse jump time - allows for a quick double-tap in a
+            direction, within a this timeout, to start out with a
+            faster mouse movement                                       0009    7F 01
+1           normal mouse starting speed                                 000B    03
+1           mouse jump mode starting speed                              000C    06
+1           mouse acceleration factor                                   000D    0A
+1           delay on key repeat                                         000E    64
+1           options byte
+            bit 0x01: key repeat enabled
+            bit 0x02: mass storage mode enabled on power-on             000F    05      key repeat and mass
+                                                                                        storage enabled
+------------------------------------------------------------------------------------------------------------
+Chord Map   Entries of four bytes, terminated with an all-zero entry
+# of bytes                                                              Loc     Value   Note
+2           Chord representation, LSB first then MSB                    0010    00 08   O OOLO
+1           HID modifier byte for this HID key code, or use FF for
+            sequence                                                    0012    00      no modifiers
+1           HID key code (see notes), or sequence index                 0013    2A      BACKSPACE
+                                                                        0014    44 40   O MMOM
+                                                                        0016    00      no modifiers
+                                                                        0017    2B      TAB
+                                                                        · · ·
+                                                                        00A4    80 02   O OMOL
+                                                                        00A6    20      SHIFT
+                                                                        00A7    21      '3' (i.e. '#')
+                                                                        · · ·
+                                                                        01C8    20 02   O ORRO
+                                                                        01CA    FF      sequence
+                                                                        01CB    00      Index 0
+                                                                        01C8    20 12   S ORRO
+                                                                        01CA    FF      sequence
+                                                                        01CB    01      Index 1
+                                                                        · · ·
+4           End of table delimiter                                      01F4    00 00 00 00 End of table
+------------------------------------------------------------------------------------------------------------
+Mouse Map   Entries of three bytes, terminated with an all-zero entry
+# of bytes                                                              Loc     Value   Note
+2           Chord representation, LSB first then MSB                    01F8    08 00
+1           Mouse action byte                                           01FA    02
+· · ·
+3           End of table delimiter                                      021C    00 00 00    End of table
+------------------------------------------------------------------------------------------------------------
+Seq Map     Variable-length entries, terminated with a 0-length entry
+# of bytes                                                              Loc     Value   Note
+2           Length of sequence entry, LSB first then MSB. First
+            sequence is known as index 0, next sequence is known as
+            index 1, etc.                                               021F    0A 00   10 byte entry (index 0)
+1           HID modifier byte for this HID code in the sequence
+            (see notes)                                                 0221    00      no modifiers
+1           HID key code in the sequence (see notes)                    0222    17      't'
+            ... additional 2-byte sets depending on
+            length of sequence ...                                      0223    00      no modifiers
+                                                                        0224    0B      'h'
+                                                                        0225    00      no modifiers
+                                                                        0226    08      'e'
+                                                                        0227    00      no modifiers
+                                                                        0228    2C      SPACE
+                                                                        0229    0A 00   10 byte entry (index 1)
+                                                                        022B    20      SHIFT
+                                                                        022C    17      't' (i.e. 'T')
+                                                                        022D    00      no modifiers
+                                                                        022E    0B      'h'
+                                                                        022F    00      no modifiers
+                                                                        0230    08      'e'
+                                                                        0231    00      no modifiers
+                                                                        0232    2C      SPACE
+                                                                        0233    08 00   8 byte entry (index 2)
+                                                                        0235    00      no modifiers
+                                                                        0236    12      'o'
+                                                                        0237    00      no modifiers
+                                                                        0238    09      'f'
+                                                                        0239    00      no modifiers
+                                                                        023A    2C      SPACE
+                                                                        · · ·
+4           End of table delimiter                                      0283    00 00   End of table
+------------------------------------------------------------------------------------------------------------
+ Thumb
+ bit 0 4 8 12
+ Fingers
+bit 3 bit 2 bit 1
+bit 7 bit 6 bit 5
+bit 11 bit 10 bit 9
+bit 15 bit 14 bit 13
+
+THUMBS
+0x0001 "NUM" button
+0x0010 "ALT" button
+0x0100 "CTRL" button
+0x1000 "SHFT" button
+
+unmodified counts:
+ 12 - one   button chords [3^1 * C(4,1)]
+ 54 - two   button chords [3^2 * C(4,2)]
+108 - three button chords [3^3 * C(4,3)]
+ 81 - four  button chords [3^4 * C(4,4)]
+255 total

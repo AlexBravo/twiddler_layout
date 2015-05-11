@@ -1,0 +1,35 @@
+# This data was pulled from pages 59-60 of
+# http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+
+# This data is the footnotes, giving extra information about HID codes
+
+#ID	Note
+1	Usage of keys is not modified by the state of the Control, Alt, Shift or Num Lock keys. That is, a key does not send extra codes to compensate for the state of any Control, Alt, Shift or Num Lock keys.
+2	Typical language mappings: US: \| Belg: μ`£ FrCa: <}> Dan:’* Dutch: <> Fren:*μ Ger: #’ Ital: ù§ LatAm: }`] Nor:,* Span: }Ç Swed: ,* Swiss: $£ UK: #~.
+3	Typical language mappings: Belg:<\> FrCa:«°» Dan:<\> Dutch:]|[ Fren:<> Ger:<|> Ital:<> LatAm:<> Nor:<> Span:<> Swed:<|> Swiss:<\> UK:\| Brazil: \|.
+4	Typically remapped for other languages in the host system.
+5	Keyboard Enter and Keypad Enter generate different Usage codes.
+6	Typically near the Left-Shift key in AT-102 implementations.
+7	Example, Erase-EazeTM key.
+8	Reserved for language-specific functions, such as Front End Processors and Input Method Editors.
+9	Reserved for typical keyboard status or keyboard errors. Sent as a member of the keyboard array. Not a physical key.
+10	Windows key for Windows 95, and “Compose.”
+11	Implemented as a non-locking key; sent as member of an array.
+12	Implemented as a locking key; sent as a toggle button. Available for legacy support; however, most systems should use the non-locking version of this key.
+13	Backs up the cursor one position, deleting a character as it goes.
+14	Deletes one character without changing position.
+
+21	Toggle Double-Byte/Single-Byte mode.
+22	Undefined, available for other Front End Language Processors.
+23	Windowing environment key, examples are Microsoft Left Win key, Mac Left Apple key, Sun Left Meta key
+24	Windowing environment key, examples are Microsoft® RIGHT WIN key, Macintosh® RIGHT APPLE key, Sun® RIGHT META key.
+25	Hangul/English toggle key. This usage is used as an input method editor control key on a Korean language keyboard.
+26	Hanja conversion key. This usage is used as an input method editor control key on a Korean language keyboard.
+27	Keypad Comma is the appropriate usage for the Brazilian keypad period (.) key. This represents the closest possible match, and system software should do the correct mapping based on the current locale setting.
+28	Keyboard International1 should be identified via footnote as the appropriate usage for the Brazilian forward-slash (/) and question-mark (?) key. This usage should also be renamed to either "Keyboard Non-US / and ?" or to "Keyboard International1" now that it's become clear that it does not only apply to Kanji keyboards anymore.
+29	Used on AS/400 keyboards.
+30	Defines the Katakana key for Japanese USB word-processing keyboards.
+31	Defines the Hiragana key for Japanese USB word-processing keyboards.
+32	Usage 0x94 (Keyboard LANG5) "Defines the Zenkaku/Hankaku key for Japanese USB word-processing keyboards.
+33	The symbol displayed will depend on the current locale settings of the operating system. For example, the US thousands separator would be a comma, and the decimal separator would be a period.
+34	The symbol displayed will depend on the current locale settings of the operating system. For example the US currency unit would be $ and the sub-unit would be ¢.
