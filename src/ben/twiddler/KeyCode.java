@@ -1,109 +1,141 @@
 package ben.twiddler;
 
-import ben.twiddler.data.CodeInfo;
-import ben.twiddler.data.KeyCodes;
-import ben.twiddler.enums.Modifier;
-import ben.util.BitManip;
+import ben.twiddler.data.KeyNotes;
+import ben.twiddler.data.SymbolOverrides;
+import ben.twiddler.enums.KeyboardSection;
+import ben.util.TsvLoader;
 
+import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
- * Created by benh on 5/10/15.
+ * Created by benh on 5/15/15.
  */
 public class KeyCode {
+    public final int usageId;
+    public final KeyboardSection section;
+    public final String symbol;
+    public final String modifiedSymbol;
+    public final List<String> notes;
 
-    private static Map<String, Set<CodeInfo>> symbolToCodeInfos;
+    // TODO: usageIdToKeyCode should be immutable
+    public static final SortedMap<Integer, KeyCode> usageIdToKeyCode = new TreeMap<>();
+
+    public static KeyCode getKeyCode(final int usageId){
+        return usageIdToKeyCode.get(usageId);
+    }
+
     static {
-        symbolToCodeInfos = new HashMap<>();
-        for(CodeInfo ci: KeyCodes.idToCodeInfo.values()){
-            {
-                Set<CodeInfo> codes = symbolToCodeInfos.get(ci.symbol);
-                if (codes == null) {
-                    codes = new HashSet<>();
-                    symbolToCodeInfos.put(ci.symbol, codes);
+        try {
+            TsvLoader tl = TsvLoader.loadFrom("src/resources/HidCodes.tsv", 4);
+            for (int i = 0; i < tl.getNumRows(); ++i) {
+                final List<String> row = tl.getRow(i);
+
+                // id may be a range, SortedMap.tailMap().firstKey() gets us to the lowId we need
+                final String lowId = row.get(0).split("-")[0];
+                String parsing = row.get(2);
+                KeyboardSection section = null;
+                if (parsing.startsWith("Keyboard ")) {
+                    section = KeyboardSection.KEYBOARD;
+                    parsing = parsing.substring("Keyboard ".length());
+                } else if (parsing.startsWith("Keypad ")) {
+                    section = KeyboardSection.KEYPAD;
+                    parsing = parsing.substring("Keypad ".length());
                 }
-                codes.add(ci);
-            }
-            if (ci.isModifiable){
-                Set<CodeInfo> codes = symbolToCodeInfos.get(ci.modifiedSymbol);
-                if (codes == null) {
-                    codes = new HashSet<>();
-                    symbolToCodeInfos.put(ci.modifiedSymbol, codes);
+                final String[] symbols = parsing.split(" and ");
+                final String symbol = SymbolOverrides.getSymbol(symbols[0]);
+                String modifiedSymbol = null;
+                if (symbols.length > 1) {
+                    modifiedSymbol = SymbolOverrides.getSymbol(symbols[1]);
                 }
-                codes.add(ci);
-            }
-        }
-        for(Map.Entry<String, Set<CodeInfo>> e: symbolToCodeInfos.entrySet()){
-            if (e.getValue().size() > 1){
-                List<String> symbols = new ArrayList<>();
-                for(CodeInfo ci: e.getValue()){
-                    symbols.add(ci.toString());
+
+                List<String> notes = new ArrayList<>();
+                String[] noteIdStrs = row.get(3).split("[^0-9]]");
+                for (String noteIdStr : noteIdStrs) {
+                    try {
+                        int noteId = Integer.parseInt(noteIdStr);
+                        String note = KeyNotes.idToNote.get(noteId);
+                        if (note != null) {
+                            notes.add(note);
+                        }
+                    } catch (NumberFormatException nfe) {
+                        // silence...? noteId was ""
+                    }
                 }
-                System.out.println("ambiguous symbols: " + symbols);
+
+                final KeyCode keyCode = new KeyCode(
+                        Integer.parseInt(lowId),
+                        section,
+                        symbol,
+                        modifiedSymbol,
+                        notes);
+                usageIdToKeyCode.put(Integer.parseInt(lowId), keyCode);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private final Modifier modifier;
-    private final int code;
-
-    public KeyCode(final Modifier modifier, final int code){
-        this.modifier = modifier;
-        this.code = code;
+    private KeyCode(final int usageId,
+                    final KeyboardSection section,
+                    final String symbol,
+                    final String modifiedSymbol,
+                    final List<String> notes){
+        this.usageId = usageId;
+        this.section = section;
+        this.symbol = symbol;
+        this.modifiedSymbol = modifiedSymbol;
+        this.notes = notes;
     }
 
-    public KeyCode(final int code){
-        this(Modifier.NONE, code);
-    }
-
-    public boolean isValid(){
-        if (!KeyCodes.idToCodeInfo.containsKey(code)){
-            return false;
-        }
-        CodeInfo ci = KeyCodes.idToCodeInfo.get(code);
-        return ((modifier == Modifier.NONE) || ci.isModifiable);
+    public boolean isModifiable(){
+        return (modifiedSymbol != null);
     }
 
     @Override
     public String toString(){
-        if (modifier == Modifier.NONE) {
-            return KeyCodes.idToCodeInfo.get(code).symbol;
-        } else {
-            return KeyCodes.idToCodeInfo.get(code).modifiedSymbol;
-        }
+        final StringBuilder sb = new StringBuilder();
+        sb.append(usageId).append(":")
+                .append(section == null ? "" : section + "-")
+                .append(modifiedSymbol == null ? symbol : "(" + symbol + "," + modifiedSymbol + ")")
+                //.append(notes.isEmpty() ? "" :  "\t" + notes)
+        ;
+        return sb.toString();
     }
 
-    public byte[] toBytes(){
-        final byte[] result = new byte[2];
-        writeTo(result, 0);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        KeyCode keyCode = (KeyCode) o;
+
+        if (usageId != keyCode.usageId) return false;
+        if (section != keyCode.section) return false;
+        if (!symbol.equals(keyCode.symbol)) return false;
+        if (modifiedSymbol != null ? !modifiedSymbol.equals(keyCode.modifiedSymbol) : keyCode.modifiedSymbol != null)
+            return false;
+        return notes.equals(keyCode.notes);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = usageId;
+        result = 31 * result + (section != null ? section.hashCode() : 0);
+        result = 31 * result + symbol.hashCode();
+        result = 31 * result + (modifiedSymbol != null ? modifiedSymbol.hashCode() : 0);
+        result = 31 * result + notes.hashCode();
         return result;
     }
 
-    public void writeTo(final byte[] bytes, final int offset){
-        bytes[offset] = modifier.serialized;
-        bytes[offset+1] = (byte) code;
-    }
-
-    public static KeyCode parseFrom(final byte[] bytes){
-        return parseFrom(bytes, 0);
-    }
-
-    public static KeyCode parseFrom(final byte[] bytes, final int offset){
-        Modifier modifier = Modifier.byteToModifier.get(bytes[offset]);
-        int code = BitManip.unsigned(bytes[offset+1]);
-        return new KeyCode(modifier, code);
-    }
-
-    public static KeyCode parseFrom(final String pattern){
-        // not all KeyCodes have chars associated with them
-        // some chars have multiple KeyCodes associated with them
-
-    }
-
-    public static void main(String[] args){
+    public static void main(final String[] args){
         System.out.println("Hello World!");
 
-
+        for(KeyCode kc: KeyCode.usageIdToKeyCode.values()){
+            System.out.println(kc);
+        }
 
         System.out.println("Goodbye World!");
     }

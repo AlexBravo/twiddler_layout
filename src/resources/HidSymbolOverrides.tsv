@@ -1,0 +1,104 @@
+// This data was authored by me
+// The purpose is that the HID codes are numbers mapping to "symbols"
+// The simple case is when a symbol is a single character, but not all are.
+// A more complicated case is the symbol [Tab]
+// This file is to override some symbols in the HID codes to normalize the symbols
+// * eliminate spaces
+// * eliminate parenthetical stuff (comments)
+// * make them short
+// * for single words, make them all caps
+// * for multi-words make them CamelCase
+// * an example is "DELETE (Backspace)" -> DEL
+
+
+// symbols in the HID table that can be characters
+Comma	,
+Equal Sign	=
+Grave Accent	`
+Non-US #	#
+Non-US \	\
+Tilde	~
+(underscore)	_
+
+
+// related groups of key codes concise symbols
+
+#Return	RETURN
+Return (ENTER)	Return(ENTER)
+
+Delete Forward	DEL
+Delete	DEL
+DELETE (Backspace)	BKSPC
+Backspace	BKSPC
+
+Spacebar	SPC
+Space	SPC
+
+PageDn	PGDN
+PageDown	PGDN
+PageUp	PGUP
+
+LeftAlt	AltLeft
+RightAlt	AltRight
+
+LeftControl	ControlLeft
+RightControl	ControlRight
+
+Left GUI	GUILeft
+Right GUI	GUIRight
+
+LeftShift	ShiftLeft
+RightShift	ShiftRight
+
+Down Arrow	ArrowDown
+Left Arrow	ArrowLeft
+Right Arrow	ArrowRight
+Up Arrow	ArrowUp
+DownArrow	ArrowDown
+LeftArrow	ArrowLeft
+RightArrow	ArrowRight
+UpArrow	ArrowUp
+
+Tab	TAB
+ESCAPE	ESC
+Home	HOME
+End	END
+Insert	INS
+
+International1	INTL1
+International2	INTL2
+International3	INTL3
+International4	INTL4
+International5	INTL5
+International6	INTL6
+International7	INTL7
+International8	INTL8
+International9	INTL9
+
+
+// symbols in the HID table which we want to remove spaces for
+Alternate Erase	AlternateErase
+Caps Lock	CapsLock
+Clear Entry	ClearEntry
+Currency Sub-unit	CurrencySub-unit
+Currency Unit	CurrencyUnit
+Decimal Separator	DecimalSeparator
+Locking Caps Lock	LockingCapsLock
+Locking Num Lock	LockingNumLock
+Locking Scroll Lock	LockingScrollLock
+Memory Add	MemoryAdd
+Memory Clear	MemoryClear
+Memory Divide	MemoryDivide
+Memory Multiply	MemoryMultiply
+Memory Recall	MemoryRecall
+Memory Store	MemoryStore
+Memory Subtract	MemorySubtract
+Num Lock	NumLock
+Scroll Lock	ScrollLock
+Thousands Separator	ThousandsSeparator
+Volume Up	VolumeUp
+Volume Down	VolumeDown
+
+
+// symbols in the HID table with weird stuff (like parenthetical things)
+Reserved (no event indicated)	Reserved

@@ -101,3 +101,46 @@ unmodified counts:
 108 - three button chords [3^3 * C(4,3)]
  81 - four  button chords [3^4 * C(4,4)]
 255 total
+
+
+use cases:
+load binary to modify
+    translate from binary to chord
+    translate from binary to usage code
+store to binary
+    translate from chord to binary
+    translate from usage code to binary
+display for human readability
+    chord to string
+    usage code to string
+
+
+We need our text format to map Twiddler chords to sequences of keypresses.
+Some keypresses can be represented by single characters, others cannot.
+Some keypresses are single keys, some are chords (multiple keys).
+x is a character which represents pressing the x key.
+Y is a character which represents pressing and holding [SHFT] and pressing y at the same time.
+Pressing and holding [CTRL] and pressing c at the same time cannot be represented by a single character.
+This can be represented here by [[CTRL]c].
+You can map Twiddler chords to strings of keypresses like "The", or even much longer strings like
+"How are you doing today?" or even paragraphs.
+You can map Twiddler chords to strings of keypresses that can't be represented by single characters
+also.  If you had a terminal open, and were using the editor vi, and you commonly do something like
+save your file, quite vi, and exit the terminal, you could map a Twiddler chord to the string of
+keypresses: [ESCAPE]!:qexit[[CTRL]q]
+
+
+
+** parsing from binary nicely
+    parseFrom(byte[])
+* parse from text
+    parseFrom(String)
+** writing to text nicely
+    toString()
+* write to binary
+    writeTo(byte[], int)
+* round trip test
+  * parse from binary
+  * write to text
+  * parse from text
+  * check binary and text parsed are equal

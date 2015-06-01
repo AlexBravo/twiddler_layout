@@ -1,122 +1,171 @@
 package ben.twiddler;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import static ben.util.BitManip.*;
+import java.util.Objects;
 
 /**
- * Created by benh on 5/2/15.
+ *
+ * Created by benh on 5/14/15.
  */
 public class TwiddlerConf {
 
-    private byte[] data;
+    private final ChordMap chordMap;
 
-    public TwiddlerConf(){
-        data = new byte[0];
+    private static final int MOUSE_CHORDS_SIZE = 3;
+
+    private TwiddlerConf(final ChordMap chordMap){
+        this.chordMap = chordMap;
     }
 
-    public TwiddlerConf(final String filename) throws IOException {
-        data = Files.readAllBytes(Paths.get(filename));
+    public static TwiddlerConf parseFromBinaryFile(final Path path) throws IOException {
+        return parseFrom(Files.readAllBytes(path));
     }
 
-    public enum HeaderField{
-        CONFIG_FORMAT_VERSION(0, 1),
-        CHORD_MAP_OFFSET(1, 2),
-        MOUSE_CHORD_MAP_OFFSET(3, 2),
-        STRING_TABLE_OFFSET(5, 2),
-        MOUSE_MODE_TIME(7, 2),
-        MOUSE_JUMP_TIME(9, 2),
-        NORMAL_MOUSE_STARTING_SPEED(11, 1),
-        MOUSE_JUMP_MODE_STARTING_SPEED(12, 1),
-        MOUSE_ACCELERATION_FACTOR(13, 1),
-        DELAY_ON_KEY_REPEAT(14, 1),
-        OPTIONS(15, 1);
-        final int offset;
-        final int length;
-        private HeaderField(final int offset, final int length){
-            this.offset = offset;
-            this.length = length;
-        }
-        public int parseValue(final byte[] data){
-            return unsigned(data, offset, length);
-        }
-        public int parseValueLsbFirst(final byte[] data){
-            return unsignedLsbFirst(data, offset, length);
-        }
+    public static TwiddlerConf parseFrom(final byte[] data){
+        final Header header = Header.parseFrom(data, 0);
+        final StringTable stringTable = StringTable.parseFrom(data, header.stringTableOffset);
+        final ChordMap chordMap = ChordMap.parseFrom(stringTable, data, header.chordsOffset);
+//        final MouseMap mouseMap = MouseMap.parseFrom(data, header.mouseChordsOffset);
+        return new TwiddlerConf(chordMap);
     }
 
-    public int getConfigFormatVersion(){  return HeaderField.CONFIG_FORMAT_VERSION.parseValue(data);  }
+    public static TwiddlerConf parseFromTextFile(final Path path) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        for(final String line: Files.readAllLines(path, Charset.defaultCharset())){
+            sb.append(line).append("\n");
+        }
+        return parseFrom(sb.toString());
+    }
 
-    // dynamic lookups of other sections of file
-    public int getChordMapOffset() {  return HeaderField.CHORD_MAP_OFFSET.parseValueLsbFirst(data);  }
-    public int getMouseChordMapOffset() {  return HeaderField.MOUSE_CHORD_MAP_OFFSET.parseValueLsbFirst(data);  }
-    public int getStringTableOffset() {  return HeaderField.STRING_TABLE_OFFSET.parseValueLsbFirst(data);  }
+    public static TwiddlerConf parseFrom(final String text) throws IOException {
+        return new TwiddlerConf(ChordMap.parseFrom(text));
+    }
 
-    public int getMouseModeTime() {  return HeaderField.MOUSE_MODE_TIME.parseValue(data);  }
-    public int getMouseJumpTime() {  return HeaderField.MOUSE_JUMP_TIME.parseValue(data);  }
-    public int getNormalMouseStartingSpeed() {  return HeaderField.NORMAL_MOUSE_STARTING_SPEED.parseValue(data);  }
-    public int getMouseJumpModeStartingSpeed() {  return HeaderField.MOUSE_JUMP_MODE_STARTING_SPEED.parseValue(data);  }
-    public int getMouseAccelerationFactor() {  return HeaderField.MOUSE_ACCELERATION_FACTOR.parseValue(data);  }
-    public int getDelayOnKeyRepeat() {  return HeaderField.DELAY_ON_KEY_REPEAT.parseValue(data);  }
-    public int getOptions() {  return HeaderField.OPTIONS.parseValue(data);  }
+    public void writeToTextFile(final Path path) throws IOException {
+        final BufferedWriter bw = Files.newBufferedWriter(path, Charset.defaultCharset());
+        final StringBuilder sb = new StringBuilder();
+        writeTo(sb);
+        final String s = sb.toString();
+        bw.write(s, 0, s.length());
+        bw.close();
+    }
 
+    public void writeTo(final StringBuilder stringBuilder){
+        chordMap.writeTo(stringBuilder);
+    }
 
-    public class ChordMapping {
-        public final int offset;
-        public ChordMapping(final int offset){  this.offset = offset;  }
+    public void writeToBinaryFile(final Path path) throws IOException {
+        Files.write(path, toBytes());
+    }
 
+    public byte[] toBytes(){
+        final StringTable stringTable = chordMap.buildStringTable();
+        final byte[] stringTableBytes = stringTable.toBytes();
+        final byte[] chordMapBytes = chordMap.toBytes(stringTable);
+
+        final byte[] mouseMapBytes = new byte[MOUSE_CHORDS_SIZE];
+        for(int i = 0; i < MOUSE_CHORDS_SIZE; ++i)
+            mouseMapBytes[i] = 0;
+
+        final Header header = new Header();
+        header.chordsOffset = Header.SIZE;
+        header.mouseChordsOffset = Header.SIZE + chordMapBytes.length;
+        header.stringTableOffset = Header.SIZE + chordMapBytes.length + mouseMapBytes.length;
+        final byte[] headerBytes = header.toBytes();
+
+        final byte[] result = new byte[headerBytes.length + chordMapBytes.length + mouseMapBytes.length + stringTableBytes.length];
+        System.arraycopy(headerBytes, 0, result, 0, headerBytes.length);
+        System.arraycopy(chordMapBytes, 0, result, header.chordsOffset, chordMapBytes.length);
+        System.arraycopy(mouseMapBytes, 0, result, header.mouseChordsOffset, mouseMapBytes.length);
+        System.arraycopy(stringTableBytes, 0, result, header.stringTableOffset, stringTableBytes.length);
+
+        return result;
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        sb.append("config format version\t" + Integer.toHexString(getConfigFormatVersion()) + "\n");
-        sb.append("chord-map offset from start of file, LSB first then MSB\t" + Integer.toHexString(getChordMapOffset()) + "\n");
-        sb.append("mouse-chord-map offset, LSB first then MSB\t" + Integer.toHexString(getMouseChordMapOffset()) + "\n");
-        sb.append("string table offset, LSB first then MSB\t" + Integer.toHexString(getStringTableOffset()) + "\n");
-        sb.append("mouse mode time - timeout for staying in mouse mode\t" + Integer.toHexString(getMouseModeTime()) + "\n");
-        sb.append("mouse jump time - allows for a quick double-tap in a\t" + Integer.toHexString(getMouseJumpTime()) + "\n");
-        sb.append("normal mouse starting speed\t" + Integer.toHexString(getNormalMouseStartingSpeed()) + "\n");
-        sb.append("mouse jump mode starting speed\t" + Integer.toHexString(getMouseJumpModeStartingSpeed()) + "\n");
-        sb.append("mouse acceleration factor\t" + Integer.toHexString(getMouseAccelerationFactor()) + "\n");
-        sb.append("delay on key repeat\t" + Integer.toHexString(getDelayOnKeyRepeat()) + "\n");
-        sb.append("options byte\t" + Integer.toHexString(getOptions()) + "\n");
+        TwiddlerConf that = (TwiddlerConf) o;
 
-        // 4 bytes per mapping
-        //   2 bytes for chord
-        //   1 byte modifier
-        //   1 byte key code
-        // 00 00 00 00 ends table
-        boolean tableEnded = false;
-        int count = 0;
-        for(int i = getChordMapOffset(); !tableEnded; i += 4){
-            Chord chord = Chord.parseFrom(data, i);
-            sb.append(chord.toString() + "\n");
-            sb.append(hexString(data[2]) + "\n");
-            sb.append(hexString(data[3]) + "\n");
-            ++count;
-            tableEnded = (data[i] == 0) && (data[i+1] == 0) && (data[i+2] == 0) && (data[i+3] == 0);
-        }
-        sb.append(count + " chords\n");
-        sb.append("ended at " + Integer.toHexString(getChordMapOffset() + count*4) + "\n");
+        return chordMap.equals(that.chordMap);
+    }
 
+    @Override
+    public int hashCode() {
+        return chordMap.hashCode();
+    }
 
-
+    @Override
+    public String toString(){
+        final StringBuilder sb = new StringBuilder();
+        sb.append(chordMap.toString());
         return sb.toString();
     }
 
+    private String diff(final TwiddlerConf that){
+        final StringBuilder sb = new StringBuilder();
+        sb.append(this.chordMap.diff(that.chordMap));
+        return sb.toString();
+    }
 
-
-
+    // support translation, read from whichever exists and write to whichever doesn't
+    // --cfg <file>
+    // --tsv <file>
     public static void main(final String[] args) throws IOException {
-        System.out.println("Hello World!");
+        if (args.length != 4){
+            printUsage();
+        } else {
+            Path cfgPath = null;
+            Path tsvPath = null;
+            for (int i = 0; i < args.length; ++i) {
+                if ("--cfg".equals(args[i])) {
+                    ++i;
+                    cfgPath = FileSystems.getDefault().getPath(args[i]);
+                }
+                if ("--tsv".equals(args[i])) {
+                    ++i;
+                    tsvPath = FileSystems.getDefault().getPath(args[i]);
+                }
+            }
 
-        final TwiddlerConf tc = new TwiddlerConf("/Users/benh/Downloads/twiddler_default.cfg");
-        System.out.println(tc.toString());
-
+            if (Files.exists(cfgPath) && Files.exists(tsvPath)) {
+                System.out.println("both files exist already");
+                printUsage();
+            } else if (!Files.exists(cfgPath) && !Files.exists(tsvPath)) {
+                System.out.println("neither file exists");
+                printUsage();
+            } else if (Files.exists(cfgPath) && !Files.exists(tsvPath)){
+                final TwiddlerConf tc = TwiddlerConf.parseFromBinaryFile(cfgPath);
+                System.out.println("loaded ["+ cfgPath.toString() +"]");
+                System.out.println("writing ["+tsvPath.toString()+"]");
+                tc.writeToTextFile(tsvPath);
+            } else { // (!Files.exists(cfgPath) && Files.exists(tsvPath))
+                final TwiddlerConf tc = TwiddlerConf.parseFromTextFile(tsvPath);
+                System.out.println("loaded ["+ tsvPath.toString() +"]");
+                System.out.println("writing ["+cfgPath.toString()+"]");
+                tc.writeToBinaryFile(cfgPath);
+            }
+        }
         System.out.println("Goodbye World!");
+    }
+
+    private static void printUsage(){
+        System.out.println("usage:");
+        System.out.println("\tTwiddlerConf --cfg <cfg file> --tsv <tsv file>");
+        System.out.println("one of the cfg and tsv should exist and one shouldn't, the one that exists will be translated and written to the one that doesn't");
+        System.out.println("valid special symbols in tsv file: (see http://www.usb.org/developers/hidpage/Hut1_12v2.pdf)");
+        for(final String symbol: Symbol.getAllSymbols()){
+            if (symbol.length() > 1){
+                System.out.println("\t[" + symbol + "]");
+            }
+        }
     }
 
 }

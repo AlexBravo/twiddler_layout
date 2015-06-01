@@ -1,10 +1,10 @@
-# This data was pulled from pages 53-60 of
-# http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+// This data was pulled from pages 53-60 of
+// http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
 
-# This data is the table of codes with short (parsable) description of the corresponding keyboard signal
+// This data is the table of codes with short (parsable) description of the corresponding keyboard signal
 
-#Usage ID	Usage ID	Usage Name
-#(Dec)	(Hex)
+// Usage ID	Usage ID	Usage Name
+// (Dec)	(Hex)
 0	00	Reserved (no event indicated)	9
 1	01	Keyboard ErrorRollOver	9
 2	02	Keyboard POSTFail	9

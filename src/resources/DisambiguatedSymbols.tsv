@@ -1,0 +1,63 @@
+// This data was authored by me
+// The problem is that the symbols from the HID codes are ambiguous, especially after
+// normalization from SymbolOverrides.tsv.
+// Symbols stand for key-presses, and several keypresses accomplish the same conceptual thing.
+// There is a lot of duplication between the keyboard and the keypad, also with international stuff.
+// This duplication is nice for a full sized keyboard, but we want people to be able to define
+// a chord mapping with as few symbols as possible, without restricting their options (remove redundancy).
+// Where things are ambiguous, this file will make the decision about which is preferred
+
+//Symbol	code
+!	30
+#	32
+%	34
+&	36
+(	38
+)	39
+*	37
++	46
+,	54
+-	45
+.	55
+/	56
+0	39
+1	30
+2	31
+3	32
+4	33
+5	34
+6	35
+7	36
+8	37
+9	38
+:	51
+<	54
+=	46
+>	55
+@	31
+A	4
+ArrowDown	81
+ArrowLeft	80
+ArrowRight	79
+ArrowUp	82
+B	5
+BKSPC	42
+C	6
+Clear	156
+D	7
+DEL	76
+E	8
+END	77
+F	9
+HOME	74
+INS	73
+PGDN	78
+PGUP	75
+SPC	44
+TAB	43
+\	49
+^	35
+{	47
+|	49
+}	48
+~	53

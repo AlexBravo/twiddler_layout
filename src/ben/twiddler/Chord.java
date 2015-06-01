@@ -3,12 +3,17 @@ package ben.twiddler;
 import ben.twiddler.enums.FingerKey;
 import ben.twiddler.enums.ThumbKey;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EnumSet;
-import static ben.util.BitManip.*;
+
+import static ben.util.Guards.assume;
+import static ben.util.Guards.require;
+import static ben.util.old.Bits.*;
+import static java.util.Arrays.copyOfRange;
 
 /**
- * Chord representds a chord.
+ * Chord represents a chord.
  *
  * It's capable of representing any chord from a configuration file (even invalid ones).
  * It's capable of representing any real life set of keys pressed on the Twiddler (even invalid ones).
@@ -18,7 +23,7 @@ import static ben.util.BitManip.*;
  *
  * Created by benh on 5/2/15.
  */
-public class Chord {
+public class Chord implements Comparable<Chord> {
 
     private final EnumSet<ThumbKey> thumb;
     private final EnumSet<FingerKey>[] finger;
@@ -37,14 +42,105 @@ public class Chord {
         this.finger[PINKEY] = pinkey;
     }
 
-//    public Chord(){
-//        this(
-//                EnumSet.noneOf(ThumbKey.class),
-//                EnumSet.noneOf(FingerKey.class),
-//                EnumSet.noneOf(FingerKey.class),
-//                EnumSet.noneOf(FingerKey.class),
-//                EnumSet.noneOf(FingerKey.class));
-//    }
+    public static Chord parseFrom(final byte[] bytes, final int offset){
+        if (bytes.length <= offset + 1) {
+            throw new IllegalArgumentException("need two bytes to parse a chord");
+        }
+        EnumSet<ThumbKey> thumb = EnumSet.noneOf(ThumbKey.class);
+        if (readBit(bytes, offset, 0)) thumb.add(ThumbKey.NUM);
+        if (readBit(bytes, offset, 4)) thumb.add(ThumbKey.ALT);
+        if (readBit(bytes, offset, 8)) thumb.add(ThumbKey.CTRL);
+        if (readBit(bytes, offset, 12)) thumb.add(ThumbKey.SHFT);
+        EnumSet<FingerKey> pointer = EnumSet.noneOf(FingerKey.class);
+        if (readBit(bytes, offset, 3)) pointer.add(FingerKey.LEFT);
+        if (readBit(bytes, offset, 2)) pointer.add(FingerKey.MIDDLE);
+        if (readBit(bytes, offset, 1)) pointer.add(FingerKey.RIGHT);
+        EnumSet<FingerKey> middle = EnumSet.noneOf(FingerKey.class);
+        if (readBit(bytes, offset, 7)) middle.add(FingerKey.LEFT);
+        if (readBit(bytes, offset, 6)) middle.add(FingerKey.MIDDLE);
+        if (readBit(bytes, offset, 5)) middle.add(FingerKey.RIGHT);
+        EnumSet<FingerKey> ring = EnumSet.noneOf(FingerKey.class);
+        if (readBit(bytes, offset, 11)) ring.add(FingerKey.LEFT);
+        if (readBit(bytes, offset, 10)) ring.add(FingerKey.MIDDLE);
+        if (readBit(bytes, offset, 9)) ring.add(FingerKey.RIGHT);
+        EnumSet<FingerKey> pinkey = EnumSet.noneOf(FingerKey.class);
+        if (readBit(bytes, offset, 15)) pinkey.add(FingerKey.LEFT);
+        if (readBit(bytes, offset, 14)) pinkey.add(FingerKey.MIDDLE);
+        if (readBit(bytes, offset, 13)) pinkey.add(FingerKey.RIGHT);
+        return new Chord(thumb, pointer, middle, ring, pinkey);
+    }
+
+    public static Chord parseFrom(final String pattern){
+        final String[] thumbAndFingers = pattern.split(" ");
+        require(thumbAndFingers.length == 2, "not valid pattern for chord: ["+pattern+"]");
+
+        final String thumbStr = thumbAndFingers[0];
+        final String fingerStr = thumbAndFingers[1];
+        require(fingerStr.length() == 4, "not valid pattern for chord: [" + pattern + "]");
+
+        final EnumSet<ThumbKey> thumb = ThumbKey.parseSetFrom(thumbStr);
+        final EnumSet<FingerKey> pointer = FingerKey.parseSetFrom(fingerStr.substring(POINTER, POINTER+1));
+        final EnumSet<FingerKey> middle = FingerKey.parseSetFrom(fingerStr.substring(MIDDLE, MIDDLE+1));
+        final EnumSet<FingerKey> ring = FingerKey.parseSetFrom(fingerStr.substring(RING, RING+1));
+        final EnumSet<FingerKey> pinkey = FingerKey.parseSetFrom(fingerStr.substring(PINKEY, PINKEY+1));
+        return new Chord(thumb, pointer, middle, ring, pinkey);
+    }
+
+    public void writeTo(final StringBuilder stringBuilder){
+        ThumbKey.writeSetTo(thumb, stringBuilder);
+        stringBuilder.append(" ");
+        for(int i = POINTER; i <= PINKEY; ++i){
+            assume(finger[i].size() <= 1);
+            FingerKey.writeSetTo(finger[i], stringBuilder);
+        }
+    }
+
+    public int writeTo(final byte[] bytes, final int offset){
+        if (bytes.length <= offset + 2) {
+            throw new IllegalArgumentException("need two bytes to parse a chord");
+        }
+        writeBit(bytes, offset, 0, thumb.contains(ThumbKey.NUM));
+        writeBit(bytes, offset, 4, thumb.contains(ThumbKey.ALT));
+        writeBit(bytes, offset, 8, thumb.contains(ThumbKey.CTRL));
+        writeBit(bytes, offset, 12, thumb.contains(ThumbKey.SHFT));
+        writeBit(bytes, offset, 3, finger[POINTER].contains(FingerKey.LEFT));
+        writeBit(bytes, offset, 2, finger[POINTER].contains(FingerKey.MIDDLE));
+        writeBit(bytes, offset, 1, finger[POINTER].contains(FingerKey.RIGHT));
+        writeBit(bytes, offset, 7, finger[MIDDLE].contains(FingerKey.LEFT));
+        writeBit(bytes, offset, 6, finger[MIDDLE].contains(FingerKey.MIDDLE));
+        writeBit(bytes, offset, 5, finger[MIDDLE].contains(FingerKey.RIGHT));
+        writeBit(bytes, offset, 11, finger[RING].contains(FingerKey.LEFT));
+        writeBit(bytes, offset, 10, finger[RING].contains(FingerKey.MIDDLE));
+        writeBit(bytes, offset, 9, finger[RING].contains(FingerKey.RIGHT));
+        writeBit(bytes, offset, 15, finger[PINKEY].contains(FingerKey.LEFT));
+        writeBit(bytes, offset, 14, finger[PINKEY].contains(FingerKey.MIDDLE));
+        writeBit(bytes, offset, 13, finger[PINKEY].contains(FingerKey.RIGHT));
+        return 2;
+    }
+
+    // try for simplest first?
+    @Override
+    public int compareTo(Chord that) {
+        int result = this.thumb.size() - that.thumb.size();
+        if (result == 0){
+            int thisSize = 0;
+            int thatSize = 0;
+            for(int i = POINTER; i <= PINKEY; ++i){
+                thisSize += this.finger[i].size();
+                thatSize += that.finger[i].size();
+            }
+            result = thisSize - thatSize;
+        }
+        for(int i = POINTER; i <= PINKEY && result == 0; ++i){
+            result = this.finger[i].size() - that.finger[i].size();
+        }
+        for(int i = POINTER; i <= PINKEY && result == 0; ++i){
+            if (!this.finger[i].isEmpty()){
+                result = this.finger[i].iterator().next().compareTo(that.finger[i].iterator().next());
+            }
+        }
+        return result;
+    }
 
     public boolean isValid(){
         boolean result = true;
@@ -68,34 +164,6 @@ public class Chord {
         return sb.toString();
     }
 
-    public byte[] toBytes(){
-        final byte[] result = new byte[2];
-        writeTo(result, 0);
-        return result;
-    }
-
-    public void writeTo(final byte[] bytes, final int offset){
-        if (bytes.length <= offset + 1) {
-            throw new IllegalArgumentException("need two bytes to parse a chord");
-        }
-        setBit(bytes, offset, 0, thumb.contains(ThumbKey.NUM));
-        setBit(bytes, offset, 4, thumb.contains(ThumbKey.ALT));
-        setBit(bytes, offset, 8, thumb.contains(ThumbKey.CTRL));
-        setBit(bytes, offset, 12, thumb.contains(ThumbKey.SHIFT));
-        setBit(bytes, offset, 3, finger[POINTER].contains(FingerKey.LEFT));
-        setBit(bytes, offset, 2, finger[POINTER].contains(FingerKey.MIDDLE));
-        setBit(bytes, offset, 1, finger[POINTER].contains(FingerKey.RIGHT));
-        setBit(bytes, offset, 7, finger[MIDDLE].contains(FingerKey.LEFT));
-        setBit(bytes, offset, 6, finger[MIDDLE].contains(FingerKey.MIDDLE));
-        setBit(bytes, offset, 5, finger[MIDDLE].contains(FingerKey.RIGHT));
-        setBit(bytes, offset, 11, finger[RING].contains(FingerKey.LEFT));
-        setBit(bytes, offset, 10, finger[RING].contains(FingerKey.MIDDLE));
-        setBit(bytes, offset, 9, finger[RING].contains(FingerKey.RIGHT));
-        setBit(bytes, offset, 15, finger[PINKEY].contains(FingerKey.LEFT));
-        setBit(bytes, offset, 14, finger[PINKEY].contains(FingerKey.MIDDLE));
-        setBit(bytes, offset, 13, finger[PINKEY].contains(FingerKey.RIGHT));
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -106,7 +174,6 @@ public class Chord {
         if (thumb != null ? !thumb.equals(chord.thumb) : chord.thumb != null) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         return Arrays.equals(finger, chord.finger);
-
     }
 
     @Override
@@ -153,69 +220,6 @@ public class Chord {
 
     public static boolean thumbIsValid(final EnumSet<ThumbKey> thumb){
         return true;
-    }
-
-    public static Chord parseFrom(final byte[] bytes){
-        return parseFrom(bytes, 0);
-    }
-
-    public static Chord parseFrom(final byte[] bytes, final int offset){
-        if (bytes.length <= offset + 1) {
-            throw new IllegalArgumentException("need two bytes to parse a chord");
-        }
-        EnumSet<ThumbKey> thumb = EnumSet.noneOf(ThumbKey.class);
-        if (getBit(bytes, offset, 0)) thumb.add(ThumbKey.NUM);
-        if (getBit(bytes, offset, 4)) thumb.add(ThumbKey.ALT);
-        if (getBit(bytes, offset, 8)) thumb.add(ThumbKey.CTRL);
-        if (getBit(bytes, offset, 12)) thumb.add(ThumbKey.SHIFT);
-        EnumSet<FingerKey> pointer = EnumSet.noneOf(FingerKey.class);
-        if (getBit(bytes, offset, 3)) pointer.add(FingerKey.LEFT);
-        if (getBit(bytes, offset, 2)) pointer.add(FingerKey.MIDDLE);
-        if (getBit(bytes, offset, 1)) pointer.add(FingerKey.RIGHT);
-        EnumSet<FingerKey> middle = EnumSet.noneOf(FingerKey.class);
-        if (getBit(bytes, offset, 7)) middle.add(FingerKey.LEFT);
-        if (getBit(bytes, offset, 6)) middle.add(FingerKey.MIDDLE);
-        if (getBit(bytes, offset, 5)) middle.add(FingerKey.RIGHT);
-        EnumSet<FingerKey> ring = EnumSet.noneOf(FingerKey.class);
-        if (getBit(bytes, offset, 11)) ring.add(FingerKey.LEFT);
-        if (getBit(bytes, offset, 10)) ring.add(FingerKey.MIDDLE);
-        if (getBit(bytes, offset, 9)) ring.add(FingerKey.RIGHT);
-        EnumSet<FingerKey> pinkey = EnumSet.noneOf(FingerKey.class);
-        if (getBit(bytes, offset, 15)) pinkey.add(FingerKey.LEFT);
-        if (getBit(bytes, offset, 14)) pinkey.add(FingerKey.MIDDLE);
-        if (getBit(bytes, offset, 13)) pinkey.add(FingerKey.RIGHT);
-        return new Chord(thumb, pointer, middle, ring, pinkey);
-    }
-
-    public static Chord parseFrom(final String pattern){
-        final String[] thumbAndFingers = pattern.split(" ");
-        if (thumbAndFingers.length != 2){
-            throw new IllegalArgumentException("not valid pattern for chord: ["+pattern+"]");
-        }
-        String thumbStr = thumbAndFingers[0];
-        String fingerStr = thumbAndFingers[1];
-        EnumSet<ThumbKey> thumb = EnumSet.noneOf(ThumbKey.class);
-        if (thumbStr.contains("N")) thumb.add(ThumbKey.NUM);
-        if (thumbStr.contains("A")) thumb.add(ThumbKey.ALT);
-        if (thumbStr.contains("C")) thumb.add(ThumbKey.CTRL);
-        if (thumbStr.contains("S")) thumb.add(ThumbKey.SHIFT);
-        EnumSet<FingerKey> pointer = EnumSet.noneOf(FingerKey.class);
-        if (fingerStr.charAt(POINTER) == 'L') pointer.add(FingerKey.LEFT);
-        if (fingerStr.charAt(POINTER) == 'M') pointer.add(FingerKey.MIDDLE);
-        if (fingerStr.charAt(POINTER) == 'R') pointer.add(FingerKey.RIGHT);
-        EnumSet<FingerKey> middle = EnumSet.noneOf(FingerKey.class);
-        if (fingerStr.charAt(MIDDLE) == 'L') pointer.add(FingerKey.LEFT);
-        if (fingerStr.charAt(MIDDLE) == 'M') pointer.add(FingerKey.MIDDLE);
-        if (fingerStr.charAt(MIDDLE) == 'R') pointer.add(FingerKey.RIGHT);
-        EnumSet<FingerKey> ring = EnumSet.noneOf(FingerKey.class);
-        if (fingerStr.charAt(RING) == 'L') pointer.add(FingerKey.LEFT);
-        if (fingerStr.charAt(RING) == 'M') pointer.add(FingerKey.MIDDLE);
-        if (fingerStr.charAt(RING) == 'R') pointer.add(FingerKey.RIGHT);
-        EnumSet<FingerKey> pinkey = EnumSet.noneOf(FingerKey.class);
-        if (fingerStr.charAt(PINKEY) == 'L') pointer.add(FingerKey.LEFT);
-        if (fingerStr.charAt(PINKEY) == 'M') pointer.add(FingerKey.MIDDLE);
-        if (fingerStr.charAt(PINKEY) == 'R') pointer.add(FingerKey.RIGHT);
-        return new Chord(thumb, pointer, middle, ring, pinkey);
     }
 
 }

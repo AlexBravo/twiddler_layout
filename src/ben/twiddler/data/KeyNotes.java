@@ -17,7 +17,7 @@ public class KeyNotes {
     static {
         try {
             idToNote = new HashMap<>();
-            TsvLoader tl = new TsvLoader("src/resources/HidNotes.tsv", 2);
+            TsvLoader tl = TsvLoader.loadFrom("src/resources/HidNotes.tsv", 2);
             for(int i = 0; i < tl.getNumRows(); ++i){
                 List<String> row = tl.getRow(i);
                 idToNote.put(Integer.parseInt(row.get(0)), row.get(1));

@@ -1,8 +1,6 @@
 package ben.util;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,24 +10,10 @@ import java.util.List;
  */
 public class TsvLoader {
 
-    final int numCols;
-    final List<List<String>> data;
+    private final List<List<String>> data;
 
-    public TsvLoader(final String filename, final int expectedColumns) throws IOException {
-        this.numCols = expectedColumns;
-        data = new ArrayList<>();
-        final BufferedReader br = new BufferedReader(new FileReader(filename));
-        String line;
-        while((line = br.readLine()) != null){
-            if (!line.startsWith("#") && !line.trim().equals("")) {
-                final String[] fields = line.split("\t", -1);
-                if (fields.length != numCols) {
-                    throw new IllegalStateException("a row didn't have [" + numCols + "] columns, had [" + fields.length + "]:\n" + line);
-                }
-                data.add(Arrays.asList(fields));
-            }
-        }
-        br.close();
+    private TsvLoader(final List<List<String>> data) {
+        this.data = data;
     }
 
     public int getNumRows(){
@@ -50,6 +34,39 @@ public class TsvLoader {
             result.add(row.get(col));
         }
         return result;
+    }
+
+    public static TsvLoader loadFrom(final String filename, final int expectedColumns) throws IOException {
+        return loadFrom(new File(filename), expectedColumns);
+    }
+
+    public static TsvLoader loadFrom(final File file, final int expectedColumns) throws IOException {
+        final BufferedReader br = new BufferedReader(new FileReader(file));
+        try {
+            final TsvLoader result = loadFrom(br, expectedColumns);
+            return result;
+        } finally {
+            br.close();
+        }
+    }
+
+    public static TsvLoader loadFromText(final String text, final int expectedColumns) throws IOException {
+        return loadFrom(new BufferedReader(new StringReader(text)), expectedColumns);
+    }
+
+    public static TsvLoader loadFrom(final BufferedReader reader, final int expectedColumns) throws IOException {
+        final List<List<String>> data = new ArrayList<>();
+        String line;
+        while((line = reader.readLine()) != null){
+            if (!line.startsWith("//") && !line.trim().equals("")) {
+                final String[] fields = line.split("\t", -1);
+                if (fields.length != expectedColumns) {
+                    throw new IllegalStateException("a row didn't have [" + expectedColumns + "] columns, had [" + fields.length + "]:\n" + line);
+                }
+                data.add(Arrays.asList(fields));
+            }
+        }
+        return new TsvLoader(data);
     }
 
 }

@@ -1,9 +1,9 @@
-# This data was pulled from pages 59-60 of
-# http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+// This data was pulled from pages 59-60 of
+// http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
 
-# This data is the footnotes, giving extra information about HID codes
+// This data is the footnotes, giving extra information about HID codes
 
-#ID	Note
+// ID	Note
 1	Usage of keys is not modified by the state of the Control, Alt, Shift or Num Lock keys. That is, a key does not send extra codes to compensate for the state of any Control, Alt, Shift or Num Lock keys.
 2	Typical language mappings: US: \| Belg: μ`£ FrCa: <}> Dan:’* Dutch: <> Fren:*μ Ger: #’ Ital: ù§ LatAm: }`] Nor:,* Span: }Ç Swed: ,* Swiss: $£ UK: #~.
 3	Typical language mappings: Belg:<\> FrCa:«°» Dan:<\> Dutch:]|[ Fren:<> Ger:<|> Ital:<> LatAm:<> Nor:<> Span:<> Swed:<|> Swiss:<\> UK:\| Brazil: \|.
