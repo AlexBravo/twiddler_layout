@@ -38,13 +38,14 @@ The word "symbol" is used because some keypresses don't produce letters, like th
 #### Strings
 If you want a chord to emit a string of symbols, just specify one symbol after the other, such as "The".
 #### Modified Symbols
-Symbols can be modified with \[LSHFT\] (like for capitalizing letters), [LCTRL], [LALT], or \[LGUI\] (which stands for the Windows button, or the Command button on Mac).  The L prefix just means the left button on your full sized keyboard, there are R versions as well.  When you want to modify a symbol, you have to let the program know that it's a single symbol, so it has to be enclosed in an additional level of []'s.  So Control+C would be: [[LCTRL]c].
+Symbols can be modified with [LSHFT] \(like for capitalizing letters), [LCTRL], [LALT], or [LGUI] \(which stands for the Windows button, or the Command button on Mac).  The **L** prefix just means the left button on your full sized keyboard, there are **R** versions as well.  When you want to modify a symbol, you have to let the program know that it's a single symbol, so it has to be enclosed in an additional level of []'s.  So Control+C would be: [[LCTRL]c].
 #### Escaped characters
-Since [ and ] are used to demarcate non-single-character symbols, and we also sometimes need to specify the symbol '[' and the symbol ']', we will have to "escape" them, so when we want '[' we have to use '\\[', and when we want ']' we have to use '\\]'.  Note that this escaping only needs to be used in the chord mapping file, when typing on the twiddler, you don't have to worry about escapes.  Since we have to use \ for escaping, when we want '\', we have to use '\\\\'.
+Since [ and ] are used to demarcate non-single-character symbols, and we also sometimes need to specify the symbol '[' and the symbol ']', we will have to "escape" them, so when we want '[' we have to use '\\[', and when we want ']' we have to use '\\]'.  Note that this escaping only needs to be used in the chord mapping file, when typing on the twiddler, you don't have to worry about escapes.  Since we have to use '\' for escaping, when we want '\', we have to use '\\\\'.
 Single symbol examples:
 * O ORMO    a
 * S ORMO    A
 * O OLOM    \\[
+* O OMOL    \\\\
 * O ROOO    [TAB]
 * S ROOO    [[LSHFT][TAB]]
 * CA OOLO   [[LCTRL][LALT][DEL]]
