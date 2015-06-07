@@ -18,18 +18,6 @@ i.e. **CA OLMR**, meaning:
 
 Note: The meanings of Left, Middle and Right are as you are facing the buttons you are pressing.
 
-#### Some numbers
-Ignoring the thumb buttons, there are:
-* 12 1-button combinations (4C1 * 3^1) = 4 * 3 = 12
-* 54 2-button combinations (4C2 * 3^2) = 6 * 9 = 54
-* 108 3-button combinations (4C3 * 3^3) = 4 * 27 = 108
-* 81 4-button combinations (4C4 * 3^4) = 1 * 81 = 81
-* 255 total combinations (4^4 - 1) = 256 - 1 = 255
-
-Separating the three strongest fingers (pointer, middle and ring):
-* 27 2-button strongest-3 combinations (3C2 * 3^2) = 3 * 9 = 27
-* 27 2-button non-strongest-3 combinations (3 * 3C1 * 3) = 3 * 3 * 3 = 27 (= 54 - 27)
-
 ---
 ### Description of the command line interface
 ---
@@ -50,7 +38,7 @@ The word "symbol" is used because some keypresses don't produce letters, like th
 #### Strings
 If you want a chord to emit a string of symbols, just specify one symbol after the other, such as "The".
 #### Modified Symbols
-Symbols can be modified with [LSHFT] (like for capitalizing letters), [LCTRL], [LALT], or [LGUI] (which stands for the Windows button, or the Command button on Mac).  The L prefix just means the left button on your full sized keyboard, there are R versions as well.  When you want to modify a symbol, you have to let the program know that it's a single symbol, so it has to be enclosed in an additional level of []'s.  So Control+C would be: [[LCTRL]c].
+Symbols can be modified with \[LSHFT\] (like for capitalizing letters), [LCTRL], [LALT], or \[LGUI\] (which stands for the Windows button, or the Command button on Mac).  The L prefix just means the left button on your full sized keyboard, there are R versions as well.  When you want to modify a symbol, you have to let the program know that it's a single symbol, so it has to be enclosed in an additional level of []'s.  So Control+C would be: [[LCTRL]c].
 #### Escaped characters
 Since [ and ] are used to demarcate non-single-character symbols, and we also sometimes need to specify the symbol '[' and the symbol ']', we will have to "escape" them, so when we want '[' we have to use '\\[', and when we want ']' we have to use '\\]'.  Note that this escaping only needs to be used in the chord mapping file, when typing on the twiddler, you don't have to worry about escapes.  Since we have to use \ for escaping, when we want '\', we have to use '\\\\'.
 Single symbol examples:
@@ -74,3 +62,15 @@ Multi symbol examples:
 * When there are trade-offs between contexts, prefer the context of typing english text.  This just means, that even though I'm a programmer, and type the word "class" all the time when writing programs, most people using a keyboard aren't.  Don't skew vocabularies, and don't add "class" as a string for an easy chord when that easy chord could be used for something more "typing english" based.
 * Seems obvious that the twiddler will be slower, you lose the alternation between hands, and  also two handed chords such as [left-shift]-['] producing ["].  There are only 12 buttons so some letters will have to be chords.  We want to regain as much speed as possible.
 * It would be great if all the letters were single button presses on the twiddler, like they are on the full keyboard, do we have to give up on this?  Take advantage of the fact that a string is sent when a single button of a chord is released, treat buttons held through transitions as Open for the transition.  (Not perfectly true, long stretches with close fingers are not as easy as Open buttons.)
+
+#### Some numbers
+Ignoring the thumb buttons, there are:
+* 12 1-button combinations (4C1 * 3^1) = 4 * 3 = 12
+* 54 2-button combinations (4C2 * 3^2) = 6 * 9 = 54
+* 108 3-button combinations (4C3 * 3^3) = 4 * 27 = 108
+* 81 4-button combinations (4C4 * 3^4) = 1 * 81 = 81
+* 255 total combinations (4^4 - 1) = 256 - 1 = 255
+
+Separating the three strongest fingers (pointer, middle and ring):
+* 27 2-button strongest-3 combinations (3C2 * 3^2) = 3 * 9 = 27
+* 27 2-button non-strongest-3 combinations (3 * 3C1 * 3) = 3 * 3 * 3 = 27 (= 54 - 27)
