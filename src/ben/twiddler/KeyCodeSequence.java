@@ -68,6 +68,9 @@ public class KeyCodeSequence {
                 addChar('\\');
                 addChar(c);
                 escaping = false;
+                if (level == 0){
+                    endToken();
+                }
             } else { // !escaping
                 if (c == '\\') {
                     escaping = true;
@@ -124,7 +127,7 @@ public class KeyCodeSequence {
     }
 
     public int writeTo(final byte[] bytes, final int offset){
-        require(2 * sequence.size() < bytes.length - offset);
+        require(offset + 2 * sequence.size() - 1 < bytes.length); // max-index-to-write < bytes.length
         int thisOffset = offset;
         for(final ModifiedKeyCode mkc: sequence){
             thisOffset += mkc.writeTo(bytes, thisOffset);

@@ -37,7 +37,7 @@ public class StringTable {
     public void add(final KeyCodeSequence sequence){
         require(sequence.sequence.size() > 1);
         require(!sequenceToIndex.containsKey(sequence));
-        int maxIndex = 0;
+        int maxIndex = -1;
         for(Integer i: indexToSequence.keySet()){
             maxIndex = Math.max(maxIndex, i);
         }
@@ -81,7 +81,7 @@ public class StringTable {
         int offset = 0;
         for(Integer index: indices) {
             KeyCodeSequence sequence = indexToSequence.get(index);
-            writeLSBFirstInt(sequence.sequence.size(), result, offset, 2);
+            writeLSBFirstInt(2 * sequence.sequence.size() + 2, result, offset, 2);
             offset += 2;
             offset += sequence.writeTo(result, offset);
         }
@@ -100,4 +100,22 @@ public class StringTable {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        StringTable that = (StringTable) o;
+
+        if (!indexToSequence.equals(that.indexToSequence)) return false;
+        return sequenceToIndex.equals(that.sequenceToIndex);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = indexToSequence.hashCode();
+        result = 31 * result + sequenceToIndex.hashCode();
+        return result;
+    }
 }

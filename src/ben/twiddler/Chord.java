@@ -3,14 +3,14 @@ package ben.twiddler;
 import ben.twiddler.enums.FingerKey;
 import ben.twiddler.enums.ThumbKey;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Set;
 
+import static ben.util.Data.readBit;
+import static ben.util.Data.writeBit;
 import static ben.util.Guards.assume;
 import static ben.util.Guards.require;
-import static ben.util.old.Bits.*;
-import static java.util.Arrays.copyOfRange;
 
 /**
  * Chord represents a chord.
@@ -33,13 +33,38 @@ public class Chord implements Comparable<Chord> {
             final EnumSet<FingerKey> pointer,
             final EnumSet<FingerKey> middle,
             final EnumSet<FingerKey> ring,
-            final EnumSet<FingerKey> pinkey){
+            final EnumSet<FingerKey> pinky){
         this.thumb = thumb;
         this.finger = (EnumSet<FingerKey>[]) new EnumSet[4];
         this.finger[POINTER] = pointer;
         this.finger[MIDDLE] = middle;
         this.finger[RING] = ring;
-        this.finger[PINKEY] = pinkey;
+        this.finger[PINKY] = pinky;
+    }
+
+    public Set<FingerKey> get(int finger){
+        require(POINTER <= finger && finger <= PINKY);
+        return this.finger[finger];
+    }
+
+    public Set<FingerKey> getPointer(){
+        return get(POINTER);
+    }
+
+    public Set<FingerKey> getMiddle(){
+        return get(MIDDLE);
+    }
+
+    public Set<FingerKey> getRing(){
+        return get(RING);
+    }
+
+    public Set<FingerKey> getPinky(){
+        return get(PINKY);
+    }
+
+    public int numButtons(){
+        return thumb.size() + finger[POINTER].size() + finger[MIDDLE].size() + finger[RING].size() + finger[PINKY].size();
     }
 
     public static Chord parseFrom(final byte[] bytes, final int offset){
@@ -82,21 +107,21 @@ public class Chord implements Comparable<Chord> {
         final EnumSet<FingerKey> pointer = FingerKey.parseSetFrom(fingerStr.substring(POINTER, POINTER+1));
         final EnumSet<FingerKey> middle = FingerKey.parseSetFrom(fingerStr.substring(MIDDLE, MIDDLE+1));
         final EnumSet<FingerKey> ring = FingerKey.parseSetFrom(fingerStr.substring(RING, RING+1));
-        final EnumSet<FingerKey> pinkey = FingerKey.parseSetFrom(fingerStr.substring(PINKEY, PINKEY+1));
+        final EnumSet<FingerKey> pinkey = FingerKey.parseSetFrom(fingerStr.substring(PINKY, PINKY+1));
         return new Chord(thumb, pointer, middle, ring, pinkey);
     }
 
     public void writeTo(final StringBuilder stringBuilder){
         ThumbKey.writeSetTo(thumb, stringBuilder);
         stringBuilder.append(" ");
-        for(int i = POINTER; i <= PINKEY; ++i){
+        for(int i = POINTER; i <= PINKY; ++i){
             assume(finger[i].size() <= 1);
             FingerKey.writeSetTo(finger[i], stringBuilder);
         }
     }
 
     public int writeTo(final byte[] bytes, final int offset){
-        if (bytes.length <= offset + 2) {
+        if (bytes.length < offset + 2) {
             throw new IllegalArgumentException("need two bytes to parse a chord");
         }
         writeBit(bytes, offset, 0, thumb.contains(ThumbKey.NUM));
@@ -112,9 +137,9 @@ public class Chord implements Comparable<Chord> {
         writeBit(bytes, offset, 11, finger[RING].contains(FingerKey.LEFT));
         writeBit(bytes, offset, 10, finger[RING].contains(FingerKey.MIDDLE));
         writeBit(bytes, offset, 9, finger[RING].contains(FingerKey.RIGHT));
-        writeBit(bytes, offset, 15, finger[PINKEY].contains(FingerKey.LEFT));
-        writeBit(bytes, offset, 14, finger[PINKEY].contains(FingerKey.MIDDLE));
-        writeBit(bytes, offset, 13, finger[PINKEY].contains(FingerKey.RIGHT));
+        writeBit(bytes, offset, 15, finger[PINKY].contains(FingerKey.LEFT));
+        writeBit(bytes, offset, 14, finger[PINKY].contains(FingerKey.MIDDLE));
+        writeBit(bytes, offset, 13, finger[PINKY].contains(FingerKey.RIGHT));
         return 2;
     }
 
@@ -125,16 +150,16 @@ public class Chord implements Comparable<Chord> {
         if (result == 0){
             int thisSize = 0;
             int thatSize = 0;
-            for(int i = POINTER; i <= PINKEY; ++i){
+            for(int i = POINTER; i <= PINKY; ++i){
                 thisSize += this.finger[i].size();
                 thatSize += that.finger[i].size();
             }
             result = thisSize - thatSize;
         }
-        for(int i = POINTER; i <= PINKEY && result == 0; ++i){
+        for(int i = POINTER; i <= PINKY && result == 0; ++i){
             result = this.finger[i].size() - that.finger[i].size();
         }
-        for(int i = POINTER; i <= PINKEY && result == 0; ++i){
+        for(int i = POINTER; i <= PINKY && result == 0; ++i){
             if (!this.finger[i].isEmpty()){
                 result = this.finger[i].iterator().next().compareTo(that.finger[i].iterator().next());
             }
@@ -146,7 +171,7 @@ public class Chord implements Comparable<Chord> {
         boolean result = true;
         result = result && Chord.thumbIsValid(thumb);
         int i = POINTER;
-        while(result && i <= PINKEY){
+        while(result && i <= PINKY){
             result = result && fingerIsValid(finger[i]);
             ++i;
         }
@@ -157,7 +182,7 @@ public class Chord implements Comparable<Chord> {
         StringBuilder sb = new StringBuilder();
 
         sb.append(thumbToString(thumb)).append(" ");
-        for(int f = POINTER; f <= PINKEY; ++f){
+        for(int f = POINTER; f <= PINKY; ++f){
             sb.append(fingerToString(finger[f]));
         }
 
@@ -186,7 +211,7 @@ public class Chord implements Comparable<Chord> {
     public static final int POINTER = 0;
     public static final int MIDDLE = 1;
     public static final int RING = 2;
-    public static final int PINKEY = 3;
+    public static final int PINKY = 3;
 
     private static String thumbToString(final EnumSet<ThumbKey> thumb){
         if (thumb.isEmpty()) {

@@ -32,7 +32,7 @@ public enum KeyCodeModifier {
     public static byte toByte(final EnumSet<KeyCodeModifier> modifiers){
         byte result = (byte) 0x00;
         for(final KeyCodeModifier kcm: modifiers){
-            result &= kcm.mask;
+            result |= kcm.mask;
         }
         return result;
     }

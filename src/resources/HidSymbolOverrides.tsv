@@ -19,11 +19,13 @@ Non-US #	#
 Non-US \	\
 Tilde	~
 (underscore)	_
+‘	'
+“	"
 
 
 // related groups of key codes concise symbols
 
-#Return	RETURN
+//Return	RETURN
 Return (ENTER)	Return(ENTER)
 
 Delete Forward	DEL

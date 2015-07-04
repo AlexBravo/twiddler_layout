@@ -63,6 +63,8 @@ Multi symbol examples:
 * When there are trade-offs between contexts, prefer the context of typing english text.  This just means, that even though I'm a programmer, and type the word "class" all the time when writing programs, most people using a keyboard aren't.  Don't skew vocabularies, and don't add "class" as a string for an easy chord when that easy chord could be used for something more "typing english" based.
 * Seems obvious that the twiddler will be slower, you lose the alternation between hands, and  also two handed chords such as [left-shift]-['] producing ["].  There are only 12 buttons so some letters will have to be chords.  We want to regain as much speed as possible.
 * It would be great if all the letters were single button presses on the twiddler, like they are on the full keyboard, do we have to give up on this?  Take advantage of the fact that a string is sent when a single button of a chord is released, treat buttons held through transitions as Open for the transition.  (Not perfectly true, long stretches with close fingers are not as easy as Open buttons.)
+* We shouldn't sacrifice long term speed for memorability.
+* Anything that is rare (special characters) should be as memorable as possible.
 
 #### Some numbers
 Ignoring the thumb buttons, there are:

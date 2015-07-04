@@ -34,7 +34,7 @@ public class DisambiguatedSymbolKeyCodes {
 
     public static KeyCode getKeyCode(final String symbol){
         final Set<KeyCode> keyCodes = Symbol.getKeyCodes(symbol);
-        assume(keyCodes.size() > 0);
+        assume(keyCodes.size() > 0, "got no key codes for symbol ["+symbol+"]");
         KeyCode keyCode = null;
         if (keyCodes.size() == 1){
             keyCode = keyCodes.iterator().next();

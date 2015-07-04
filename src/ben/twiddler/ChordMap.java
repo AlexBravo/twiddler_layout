@@ -20,6 +20,31 @@ public class ChordMap {
         this.chordToSequence = chordToSequence;
     }
 
+    public ChordMap(final ChordMap toCopy){
+        this(new HashMap<>(toCopy.chordToSequence));
+    }
+
+    public ChordMap(){
+        this(new HashMap<Chord, KeyCodeSequence>());
+    }
+
+    public KeyCodeSequence getSequence(final Chord chord){
+        return chordToSequence.get(chord);
+    }
+
+    public Chord getChord(final KeyCodeSequence sequence){
+        for(Map.Entry<Chord, KeyCodeSequence> e: chordToSequence.entrySet()){
+            if (Objects.equals(sequence, e.getValue())){
+                return e.getKey();
+            }
+        }
+        return null;
+    }
+
+    public KeyCodeSequence put(final Chord chord, final KeyCodeSequence sequence){
+        return chordToSequence.put(chord, sequence);
+    }
+
     public static ChordMap parseFrom(final StringTable stringTable, final byte[] data, final int offset){
         final Map<Chord, KeyCodeSequence> chordToSequence = new HashMap<>();
         int entryOffset = offset;
@@ -70,7 +95,8 @@ public class ChordMap {
     }
 
     public byte[] toBytes(final StringTable stringTable){
-        final byte[] bytes = new byte[4 * chordToSequence.size()];
+        final int numBytes = 4 * chordToSequence.size() + 4;
+        final byte[] bytes = new byte[numBytes];
         int offset = 0;
         for(final Map.Entry<Chord, KeyCodeSequence> e: chordToSequence.entrySet()){
             final Chord chord = e.getKey();
@@ -86,7 +112,9 @@ public class ChordMap {
                 offset += sequence.writeTo(bytes, offset);
             }
         }
-
+        writeInt(0, bytes, offset, 4);
+        offset += 4;
+        assume(offset == numBytes);
         return bytes;
     }
 
